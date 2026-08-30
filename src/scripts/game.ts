@@ -9,7 +9,7 @@ import {
   catchLine,
   type Contradiction,
 } from "../lib/interrogation";
-import { START, passages, type Choice, type Passage } from "../lib/story";
+import { PREAMBLE, REGISTER, START, passages, type Choice, type Passage } from "../lib/story";
 
 const doc = document;
 const view = doc.defaultView;
@@ -212,6 +212,45 @@ function land(suspicion: number): void {
   }
 }
 
+/**
+ * Something said several questions ago, read back on the way into this one.
+ * The words come out of the transcript rather than out of this file, so it is
+ * always what the player actually said. Nothing is scored --- if no line on the
+ * record ever set that claim, he simply doesn't bring it up.
+ */
+function callbackLine(passage: Passage): string | null {
+  const recall = passage.callback;
+  if (!recall) return null;
+  const source = state.transcript.find((entry) => recall.claim in entry.asserted);
+  if (!source) return null;
+  return recall.line.replaceAll("{said}", source.said);
+}
+
+/**
+ * How he sounds leaning on this one, given what's already on the file. The
+ * cursor advances rather than indexing off the transcript length: keyed off the
+ * length, two pressure points that happen to be four answers apart draw the
+ * same line, and hearing it twice in one interview reads as a loop.
+ */
+let asides = 0;
+
+function registerLine(passage: Passage): string | null {
+  if (passage.pressure !== true) return null;
+  const tier = REGISTER[Math.min(state.suspicion, REGISTER.length - 1)];
+  const line = tier[asides % tier.length] ?? null;
+  asides += 1;
+  return line;
+}
+
+/** Everything he says before the question itself, in the same breath as it. */
+async function approach(passage: Passage): Promise<void> {
+  for (const line of [registerLine(passage), callbackLine(passage)]) {
+    if (line === null) continue;
+    await say(line);
+    if (animated() && !skipRequested) await wait(LINE_MS);
+  }
+}
+
 // --- answers ----------------------------------------------------------------
 
 let state = begin(START);
@@ -283,6 +322,7 @@ async function pick(index: number): Promise<void> {
   }
   if (animated() && !skipRequested) await wait(LINE_MS);
   skipRequested = false;
+  await approach(now);
   await say(now.text);
   typing = false;
 
@@ -395,6 +435,7 @@ async function restart(): Promise<void> {
   for (const stamp of stamps) stamp.classList.remove("is-stamped");
   marks.setAttribute("aria-label", MARK_WORDS[0]);
   state = begin(START);
+  asides = 0;
   played = true;
   win.scrollTo({ top: 0, behavior: "auto" });
   await open();
@@ -408,6 +449,8 @@ async function open(): Promise<void> {
   if (!first) return;
   typing = true;
   skipRequested = false;
+  await say(PREAMBLE, "speech-record");
+  if (animated() && !skipRequested) await wait(LINE_MS);
   await say(first.text);
   typing = false;
   renderChoices(first);

@@ -1,12 +1,13 @@
 ---
 import "../styles/global.css";
-import { START, passages } from "../lib/story";
+import { PREAMBLE, START, passages } from "../lib/story";
 
 // The opening question is rendered into the HTML, not painted in by script.
 // Two reasons: the page is never blank while the bundle loads, and what the
 // build emits is the first question with its answers on it, which is the only
 // thing here that gets to do any teaching.
 const opening = passages[START];
+const recordLines = PREAMBLE.split("\n");
 const openingLines = opening.text.split("\n");
 ---
 
@@ -92,6 +93,7 @@ const openingLines = opening.text.split("\n");
         <main class="file-body">
           <div class="record" id="record">
             <div class="boot">
+              {recordLines.map((line) => <p class="speech speech-record">{line}</p>)}
               {openingLines.map((line) => <p class="speech">{line}</p>)}
             </div>
           </div>

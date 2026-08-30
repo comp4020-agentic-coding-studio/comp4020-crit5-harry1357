@@ -279,6 +279,21 @@ body::before {
   color: #17130d;
 }
 
+/* The record statement. Typed by the same machine, but it isn't anybody
+ * speaking --- it's the header of the document the speaking gets typed onto. */
+
+.speech-record {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.speech-record + .speech:not(.speech-record) {
+  margin-block-start: 1.7rem;
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: 1.7rem;
+}
+
 /* What the player has already said. It is on the page now, in the same ink,
  * indented the way a transcript indents the person who isn't asking. */
 
@@ -598,6 +613,14 @@ body::before {
   .quoted {
     font-size: 1.0625rem;
     line-height: 1.8;
+  }
+
+  /* Deliberately not stepped down here the way it is on the desktop: this is
+   * the first thing a stranger reads, and a 15px muted grey is the wrong place
+   * to save six pixels. The colour and the rule do the separating instead. */
+
+  .speech-record {
+    font-size: 1.0625rem;
   }
 
   .said,

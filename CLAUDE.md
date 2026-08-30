@@ -276,6 +276,15 @@ would never have said so.
   words back is exactly right; on screen, the identical string twice in a row
   reads as a render bug. Shorten the echo ("At home." -> "Home.") so it is
   visibly a reply.
+- **A rotating set of lines indexed off a counter that only goes up will
+  collide.** Picking an interjection with `transcript.length % set.length`
+  looks evenly distributed and isn't: two moments four answers apart draw the
+  same line, and hearing it twice in one run reads as a loop, not as a
+  character. Advance a cursor instead, and reset it when the run resets.
+- **A callback that quotes the previous answer is a follow-up, not a callback.**
+  The effect only exists at distance --- count the questions between where the
+  claim went on the record and where it gets read back, and treat anything under
+  three as flavour rather than as the record being tracked.
 - **A `Map` keyed by line index loses the second relationship a line is in.**
   One answer can be half of two different contradictions; `marked.set(line, n)`
   silently overwrote the first, so the report showed a pair with no partner ---
