@@ -1,5 +1,13 @@
 ---
 import "../styles/global.css";
+import { START, passages } from "../lib/story";
+
+// The opening question is rendered into the HTML, not painted in by script.
+// Two reasons: the page is never blank while the bundle loads, and what the
+// build emits is the first question with its answers on it, which is the only
+// thing here that gets to do any teaching.
+const opening = passages[START];
+const openingLines = opening.text.split("\n");
 ---
 
 <!doctype html>
@@ -7,34 +15,108 @@ import "../styles/global.css";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>Record of Interview — Case 4471-K</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="A man is dead at the foot of a stairwell, and you are the one in the chair. Everything you say goes on the record, and the record does not forget what you said first."
     />
 
-    <!--
-      The link-preview card: public/card.png, 1200x630 --- replace it. The URL
-      resolves against this page, like any link. No og:title/og:description:
-      scrapers fall back to the <title> and description above.
-    -->
     <meta property="og:type" content="website" />
     <meta property="og:image" content="./card.png" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Runs during parse, before the body paints, so the static opening below
+         can be swapped for the typed one without a frame of both. -->
+    <script is:inline>
+      document.documentElement.dataset.js = "on";
+    </script>
   </head>
+
   <body>
-    <header>
-      <nav aria-label="Primary">
-        <a href="./">Home</a>
-      </nav>
-    </header>
-    <main>
-      <h1>COMP4020 prototype</h1>
-      <p>
-        Scaffolding only --- the Astro equivalent of the template's placeholder,
-        here so the invariants have a page to run against. Replace it with the
-        game, and let the opening screen do the teaching.
-      </p>
-    </main>
+    <svg class="ink-defs" aria-hidden="true" focusable="false" width="0" height="0">
+      <defs>
+        <filter id="ink-bleed" x="-40%" y="-40%" width="180%" height="180%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" seed="11" result="n"
+          ></feTurbulence>
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale="2.6"
+            xChannelSelector="R"
+            yChannelSelector="G"></feDisplacementMap>
+        </filter>
+        <symbol id="mark-x" viewBox="0 0 40 40">
+          <path d="M8 7 Q 13 14 20 20 Q 26 26 32 34"></path>
+          <path d="M32 7 Q 26 13 20 20 Q 13 27 8 33"></path>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="desk">
+      <div class="file">
+        <header class="file-head">
+          <nav class="file-nav" aria-label="Case file">
+            <a class="file-tab" href="./index.html">Case 4471-K</a>
+          </nav>
+          <h1 class="file-title">Record of Interview</h1>
+          <p class="file-meta">
+            Vance, Ellis J. <span aria-hidden="true">·</span> 9 Kestrel St
+            <span aria-hidden="true">·</span> Thu 21:00&ndash;24:00
+          </p>
+          <div class="marks" id="marks" role="img" aria-label="An unmarked file.">
+            <span class="slot">
+              <svg class="stamp" viewBox="0 0 40 40" aria-hidden="true" focusable="false"
+                ><use href="#mark-x"></use></svg
+              >
+            </span>
+            <span class="slot">
+              <svg class="stamp" viewBox="0 0 40 40" aria-hidden="true" focusable="false"
+                ><use href="#mark-x"></use></svg
+              >
+            </span>
+            <span class="slot">
+              <svg class="stamp" viewBox="0 0 40 40" aria-hidden="true" focusable="false"
+                ><use href="#mark-x"></use></svg
+              >
+            </span>
+          </div>
+        </header>
+
+        <main class="file-body">
+          <div class="record" id="record">
+            <div class="boot">
+              {openingLines.map((line) => <p class="speech">{line}</p>)}
+            </div>
+          </div>
+
+          <div class="choices" id="choices">
+            <ul class="boot options">
+              {
+                opening.choices.map((choice) => (
+                  <li>
+                    <button class="option" type="button">
+                      {choice.label}
+                    </button>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <p class="sr-only" id="announce" aria-live="polite"></p>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      import "../scripts/game";
+    </script>
   </body>
 </html>

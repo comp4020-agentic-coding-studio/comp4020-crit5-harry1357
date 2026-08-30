@@ -1,20 +1,641 @@
-/* Placeholder styles. Replace with the game's own. */
+/* A case file on a desk.
+ *
+ * Three materials and nothing else: the desk (dark, warm, grained), the page
+ * (warm off-white, hard-edged, typed on), and red ink. Red is spent only on
+ * the marks and on what they are marks against --- if it turns up anywhere
+ * else it stops meaning anything.
+ *
+ * Both textures are drawn, not loaded: SVG turbulence as a data URI, so there
+ * is no image request and no asset to 404 on a deployed path. */
 
 :root {
-  --ink: #16161a;
-  --ground: #fdfdfb;
+  --desk: #221a13;
+  --desk-lift: #33261a;
+  --paper: #e9e3d5;
+  --paper-shade: #ded7c6;
+  --ink: #262119;
+  --ink-soft: #5d5546;
+  --ink-faint: #6a614f;
+  --ink-option: #4a4235;
+  --rule: #c6bda7;
+  --red: #a8261c;
+  --measure: 62ch;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+  --mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --sans: "Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--desk);
 }
 
 body {
+  position: relative;
   margin: 0;
-  background: var(--ground);
+  background-color: var(--desk);
+  background-image:
+    repeating-linear-gradient(
+      92deg,
+      rgb(0 0 0 / 0%) 0,
+      rgb(0 0 0 / 7%) 1px,
+      rgb(0 0 0 / 0%) 4px,
+      rgb(0 0 0 / 0%) 14px
+    ),
+    radial-gradient(120% 90% at 50% 0%, var(--desk-lift) 0%, var(--desk) 62%, #150f0a 100%);
   color: var(--ink);
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+  font-family: var(--sans);
+  line-height: 1.6;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-header,
-main {
-  padding-block: 1.5rem;
+/* The desk's own grain, over the gradient and under the page. */
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--grain);
+  opacity: 0.22;
+  content: "";
+  pointer-events: none;
+}
+
+.ink-defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Once the script is running it types the opening question in; the copy in the
+ * HTML is what the page says before that, and to anything not running it. */
+
+[data-js="on"] .boot {
+  display: none;
+}
+
+/* --- the desk ------------------------------------------------------------ */
+
+.desk {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  padding-block: 2rem;
   padding-inline: 1.5rem;
+  min-block-size: 100dvh;
+}
+
+/* --- the page ------------------------------------------------------------ */
+
+.file {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(54rem, 100%);
+  min-block-size: calc(100dvh - 4rem);
+  background-color: var(--paper);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 12%) inset,
+    0 2px 3px rgb(0 0 0 / 34%),
+    0 22px 48px rgb(0 0 0 / 42%);
+}
+
+/* Paper fibre. Multiply so it darkens the sheet rather than sitting on it. */
+
+.file::before {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background-image: var(--grain);
+  mix-blend-mode: multiply;
+  opacity: 0.09;
+  content: "";
+  pointer-events: none;
+}
+
+.file-head {
+  position: sticky;
+  z-index: 3;
+  display: grid;
+  inset-block-start: 0;
+  background-color: var(--paper);
+  box-shadow: 0 8px 14px -12px rgb(0 0 0 / 45%);
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 1.5rem;
+  border-block-end: 1px solid var(--rule);
+  padding-block: 1.9rem 1.4rem;
+  padding-inline: 3.25rem;
+}
+
+.file-nav {
+  grid-area: 1 / 1;
+}
+
+.file-tab {
+  display: inline-block;
+  border: 1px solid var(--rule);
+  padding-block: 0.2rem;
+  padding-inline: 0.6rem;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.file-tab:hover {
+  border-color: var(--ink-soft);
+  background-color: var(--paper-shade);
+  color: var(--ink);
+}
+
+.file-title {
+  grid-area: 2 / 1;
+  margin-block: 0.75rem 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: clamp(1.35rem, 3.2vw, 1.7rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+
+.file-meta {
+  grid-area: 3 / 1;
+  margin-block: 0.45rem 0;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+/* --- the marks ----------------------------------------------------------- */
+
+.marks {
+  display: flex;
+  grid-area: 1 / 2 / 4 / 3;
+  gap: 0.45rem;
+  align-self: start;
+}
+
+.slot {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  inline-size: 2.15rem;
+  block-size: 2.15rem;
+  background-color: rgb(0 0 0 / 2%);
+}
+
+.stamp {
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
+  transform: rotate(var(--tilt, -6deg));
+  opacity: 0;
+  color: var(--red);
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  filter: url("#ink-bleed");
+  mix-blend-mode: multiply;
+}
+
+.slot:nth-child(2) .stamp {
+  --tilt: 5deg;
+}
+
+.slot:nth-child(3) .stamp {
+  --tilt: -9deg;
+}
+
+.stamp.is-stamped {
+  opacity: 0.92;
+}
+
+.stamp.is-landing {
+  animation: stamp-land 175ms cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+
+@keyframes stamp-land {
+  0% {
+    transform: rotate(var(--tilt, -6deg)) scale(1.75);
+    opacity: 0;
+  }
+
+  62% {
+    transform: rotate(var(--tilt, -6deg)) scale(0.9);
+    opacity: 0.92;
+  }
+
+  100% {
+    transform: rotate(var(--tilt, -6deg)) scale(1);
+    opacity: 0.92;
+  }
+}
+
+/* --- the typed record ---------------------------------------------------- */
+
+.file-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-block: 2.4rem 3.5rem;
+  padding-inline: 3.25rem;
+}
+
+.record {
+  max-inline-size: var(--measure);
+}
+
+.speech {
+  margin-block: 0 0.55rem;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 1.02rem;
+  line-height: 1.85;
+  overflow-wrap: break-word;
+}
+
+.speech-catch {
+  color: #17130d;
+}
+
+/* What the player has already said. It is on the page now, in the same ink,
+ * indented the way a transcript indents the person who isn't asking. */
+
+.said {
+  position: relative;
+  margin-block: 0.55rem 0.95rem;
+  padding-inline-start: 3.2rem;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 1.02rem;
+  line-height: 1.85;
+  overflow-wrap: break-word;
+}
+
+.said::before {
+  position: absolute;
+  inset-inline-start: 0;
+  color: var(--ink-faint);
+  content: "—";
+}
+
+/* --- red ink over a line that has stopped being true --------------------- */
+
+.is-struck .quote {
+  text-decoration: underline wavy var(--red) 0.085em;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 0.34em;
+}
+
+.said.is-struck::before {
+  content: none;
+}
+
+/* The marker's own annotation: one ring per collision this line is half of.
+ * They overlap, because a second pass of the pen does. */
+
+.marginalia {
+  position: absolute;
+  display: flex;
+  inset-inline-start: 0;
+  inset-block-start: 0.22em;
+}
+
+.ring {
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--red);
+  border-radius: 50%;
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  color: var(--red);
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  transform: rotate(var(--tilt, -8deg));
+  filter: url("#ink-bleed");
+  mix-blend-mode: multiply;
+}
+
+.ring + .ring {
+  margin-inline-start: -0.45rem;
+}
+
+.is-inking .quote {
+  animation: ink-in 190ms ease-out;
+}
+
+.ring.is-landing {
+  animation: stamp-land 190ms cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+
+@keyframes ink-in {
+  from {
+    text-decoration-color: rgb(168 38 28 / 0%);
+  }
+
+  to {
+    text-decoration-color: var(--red);
+  }
+}
+
+/* --- what you are about to say, not yet on the page ---------------------- */
+
+.choices {
+  margin-block-start: 2.1rem;
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: 1.6rem;
+  max-inline-size: var(--measure);
+}
+
+.options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.options li + li {
+  margin-block-start: 0.5rem;
+}
+
+.option {
+  display: block;
+  border: 0;
+  border-inline-start: 2px solid var(--ink-faint);
+  padding-block: 0.7rem;
+  padding-inline: 1rem;
+  inline-size: 100%;
+  background-color: transparent;
+  color: var(--ink-option);
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.option:hover {
+  border-inline-start-color: var(--ink);
+  background-color: var(--paper-shade);
+  color: var(--ink);
+}
+
+.option:active {
+  border-inline-start-color: var(--red);
+  background-color: #d6cfbb;
+  color: var(--ink);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.options.is-leaving {
+  opacity: 0;
+  transition: opacity 110ms ease-in;
+}
+
+.options.is-arriving li {
+  animation: options-in 300ms ease-out backwards;
+}
+
+.options.is-arriving li:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.options.is-arriving li:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+@keyframes options-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- the finished report ------------------------------------------------- */
+
+.report {
+  margin-block: 1.6rem;
+  border-block: 1px solid var(--rule);
+  padding-block: 1.3rem;
+  padding-inline: 0;
+  list-style: none;
+}
+
+.quoted {
+  position: relative;
+  margin-block: 0 0.7rem;
+  padding-inline-start: 3.2rem;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.97rem;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+.quoted:last-child {
+  margin-block-end: 0;
+}
+
+.quoted.is-reading {
+  animation: read-back 260ms ease-out;
+}
+
+@keyframes read-back {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.verdict {
+  display: inline-block;
+  margin-block: 2.2rem 0;
+  margin-inline: 0;
+  border: 3px solid var(--red);
+  padding-block: 0.4rem;
+  padding-inline: 1.1rem;
+  color: var(--red);
+  font-family: var(--sans);
+  font-size: clamp(1.5rem, 5.5vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  line-height: 1.1;
+  transform: rotate(var(--tilt, -5.5deg));
+  opacity: 0.88;
+  filter: url("#ink-bleed");
+  mix-blend-mode: multiply;
+}
+
+.verdict[data-outcome="loss"] {
+  --tilt: -7.5deg;
+}
+
+.verdict.is-landing {
+  animation: stamp-land 190ms cubic-bezier(0.2, 0.85, 0.3, 1);
+}
+
+/* --- a mark landing knocks the page ------------------------------------- */
+
+.is-jolted .file {
+  animation: jolt 165ms ease-out;
+}
+
+@keyframes jolt {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  28% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+
+  62% {
+    transform: translate3d(2px, -1px, 0);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* --- the phone ----------------------------------------------------------- */
+
+@media (width <= 46rem) {
+  .desk {
+    padding-block: 0.4rem;
+    padding-inline: 0.4rem;
+  }
+
+  .file {
+    inline-size: 100%;
+    min-block-size: calc(100dvh - 0.8rem);
+  }
+
+  .file-head {
+    column-gap: 0.75rem;
+    padding-block: 0.85rem 0.7rem;
+    padding-inline: 1.15rem;
+  }
+
+  .file-body {
+    padding-block: 1.5rem 2.5rem;
+    padding-inline: 1.15rem;
+  }
+
+  .file-title {
+    margin-block-start: 0.55rem;
+    font-size: 1.2rem;
+  }
+
+  .file-meta {
+    margin-block-start: 0.3rem;
+    font-size: 0.7rem;
+  }
+
+  .marks {
+    gap: 0.3rem;
+  }
+
+  .record,
+  .choices {
+    max-inline-size: none;
+  }
+
+  .slot {
+    inline-size: 1.6rem;
+    block-size: 1.6rem;
+  }
+
+  .stamp {
+    inline-size: 1.85rem;
+    block-size: 1.85rem;
+    stroke-width: 3.8;
+  }
+
+  .speech,
+  .said,
+  .quoted {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+  }
+
+  .said,
+  .quoted {
+    padding-inline-start: 2.7rem;
+  }
+
+  .ring {
+    inline-size: 1.2rem;
+    block-size: 1.2rem;
+    font-size: 0.64rem;
+  }
+
+  .ring + .ring {
+    margin-inline-start: -0.42rem;
+  }
+
+  .option {
+    padding-block: 0.85rem;
+    padding-inline: 0.85rem;
+    min-block-size: 3rem;
+    font-size: 1.0625rem;
+  }
+
+  .options li + li {
+    margin-block-start: 0.55rem;
+  }
+}
+
+/* --- no motion ----------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }
