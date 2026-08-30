@@ -1,8 +1,9 @@
 # Process overview
 
-A reading-guide to how *Record of Interview* came together. Six commits, in the
-order the work actually happened: engine, story, room, sensor, harness, and a
-content pass that deepened the writing without touching any of it.
+A reading-guide to how *Record of Interview* came together, in the order the
+work actually happened: engine, story, room, sensor, harness, a content pass
+that deepened the writing without touching the engine, and the typewriter's own
+noise.
 
 ## What I built
 
@@ -112,10 +113,34 @@ thinking time, against a 300s budget, so no questions had to be cut.
 
 [`0a6f286`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-harry1357/commit/0a6f286)
 
+### 6. Two silences that looked identical to working audio
+
+The typewriter is synthesised --- three Web Audio voices, no files. Both bugs in
+it were inaudible-versus-inaudible problems, which is the worst kind to debug by
+ear, so I stopped using my ear.
+
+Patching `createBufferSource` and `createOscillator` in the page to record every
+`start()` turned it into arithmetic: 51 voices over 137 characters matched
+`ceil(letters/3) + 2 per carriage` exactly, and only the thud uses an
+oscillator, so counting oscillators proves which sound fired. That is what
+caught the first bug --- with motion off, ten voices *started* and nothing was
+audible, because an 8ms envelope pinned to `currentTime` lands behind the render
+clock and renders as its own end state.
+
+The second was mine, not the page's: I read the analyser as soon as the DOM
+settled, which with animations off is before the sound has played. It reported
+0.0000, identical to broken audio, and I had already "fixed" it once before I
+noticed the probe was racing. Both went into `CLAUDE.md` next to crit 4's
+suspended-context note, because they are the same family --- a sound that is
+missing for a clock reason, not a routing one.
+
+[`76eb6bc`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-harry1357/commit/76eb6bc)
+
 ## What the checks cover, and what they don't
 
-`pnpm check` is green: 61 tests over 6 files. The graph contract, the engine
-rule, the invariants, axe, and the palette.
+`pnpm check` is green: 69 tests over 7 files. The graph contract, the engine
+rule, the invariants, axe, the palette, and when a keystroke is allowed to
+sound.
 
 Not covered, and verified by hand in Chrome over CDP instead: that the typewriter
 types and a click skips it, that all four endings are reachable, that restarting
