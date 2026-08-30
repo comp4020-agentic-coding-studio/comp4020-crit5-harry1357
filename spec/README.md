@@ -49,3 +49,38 @@ you have of what you've taught yourself to check for — worth citing in
 A green suite here is backpressure, not a mark: your tutor verifies what you
 deployed against the published spec at the crit, and keeping your own tests
 green is how you arrive with no surprises.
+
+## This week: C5, "A game"
+
+`crit-5.test.ts` is the contract test — it retires with this brief.
+`a11y.test.ts` is a sensor, carried forward from crit 4.
+
+How C5's seven spec lines were sorted:
+
+| Spec line | Where it's answered |
+| --- | --- |
+| deployed and live at its Pages URL by the cutoff | CI `deploy` + the `ship` skill; nothing local can prove it |
+| it can be lost — a wrong move, and play ends somewhere | **tested** — a reachable loss, a reachable non-loss, and no instant trapdoor |
+| it teaches itself — no instructions on screen or off | **half tested** — the absence of tutorial prose is asserted over built `dist/` *and* `README.md`; whether the opening screen **invites** the first move is human-judged |
+| a stranger reaches an ending inside five minutes | **proxied** — every passage reaches an ending within 12 choices, and the shortest run is longer than 2. Whether the writing *earns* those five minutes is human-judged |
+| one rule has a focused automated test | satisfied by this file; the second half of the line — a change that came from **playing** — is process evidence, cited in `PROCESS.md` |
+| the repo shows the process | `pnpm check:evidence` — commits, `PROCESS.md`, `reflections/crit-5.md` |
+| you can account for how you directed the work | the crit itself; no test reaches it |
+
+The graph tests import `../src/lib/story`, which doesn't exist yet. **They start
+red on purpose** — red-to-green across the week is the work, and the commits
+that turn each one green are what `PROCESS.md` should cite.
+
+The contract they assume, so the tests survive a rewrite of every passage:
+
+```ts
+export interface Choice { readonly label: string; readonly to: string; }
+export interface Passage {
+  readonly id: string;
+  readonly text: string;
+  readonly choices: readonly Choice[];
+  readonly ending?: "win" | "loss" | "finish";
+}
+export const START: string;
+export const passages: Readonly<Record<string, Passage>>;
+```
