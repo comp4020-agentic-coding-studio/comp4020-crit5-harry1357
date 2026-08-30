@@ -230,6 +230,73 @@ better than screenshotting for anything interactive.
   **disables the exact thing the cold open depends on**. Verify the cold open in
   a browser without it.
 
+## Driving an interactive page over CDP (learned in crit 5)
+
+The CDP notes above get you a browser. These are the things that made probes
+lie once they were driving a page that animates.
+
+- **Wait for a *new* node, not for *a* node.** A list that fades out for 110ms
+  before it is replaced still matches `querySelectorAll(sel).length === 3` the
+  instant after the click, so the probe clicks the dying list, the app's own
+  re-entry guard swallows it, and the run silently stalls one step behind while
+  every assertion still reads plausibly. Tag the current node
+  (`el.dataset.stale = "1"`), then wait for one without the tag.
+- **`Emulation.setEmulatedMedia` with `prefers-reduced-motion: reduce` is a
+  test-speed lever, not just an a11y check.** It collapsed a 45-second scripted
+  playthrough to about eight seconds, which is the difference between checking
+  all four endings and checking one.
+- **To prove a typewriter types, sample it.** Poll the target element every
+  ~70ms and collect the distinct values: 16 growing prefixes is evidence,
+  a screenshot of finished text is not. Same for skip --- capture the length
+  mid-line, dispatch the click, assert the length jumps within ~120ms.
+- **"Always visible" is a claim about a scrolled page.** A header carrying a
+  status indicator passes every check at load and silently violates the spec two
+  screens down. Assert it from a scrolled state (`getBoundingClientRect().top >=
+  0 && .bottom <= innerHeight` after the run), or make it `position: sticky` and
+  prove it there.
+
+## Contrast is checkable arithmetic, so check it
+
+`spec/contrast.test.ts` reads the custom properties back out of the CSS the
+build emitted and does the WCAG maths on the pairs the stylesheet actually
+claims. It exists because `--ink-faint` shipped at 3.01:1 and looked perfectly
+fine in a screenshot; axe under jsdom returns "incomplete" for every node and
+would never have said so.
+
+- Read the **built** CSS, not the source. A token that gets renamed, minified
+  away or overridden then fails loudly instead of quietly passing.
+- Assert the *gap* between two inks, not only each one's floor. Two tokens can
+  both clear 4.5:1 and still have collapsed into each other, losing a
+  distinction the design depends on.
+
+## Content bugs that read as code bugs
+
+- **A reply that repeats the player's answer verbatim looks like a duplicated
+  line, not like a flat echo.** Character-wise an interrogator repeating your
+  words back is exactly right; on screen, the identical string twice in a row
+  reads as a render bug. Shorten the echo ("At home." -> "Home.") so it is
+  visibly a reply.
+- **A `Map` keyed by line index loses the second relationship a line is in.**
+  One answer can be half of two different contradictions; `marked.set(line, n)`
+  silently overwrote the first, so the report showed a pair with no partner ---
+  the exact opposite of the feature. Collect into an array and render one mark
+  per relationship.
+
+## More stack facts
+
+- **Vite leaves `url(#fragment)` alone.** In-document SVG filter references
+  (`filter: url("#ink-bleed")`) survive the build; only real asset URLs get
+  rewritten. Grep `dist/` for the fragment once to confirm rather than assuming.
+- **stylelint forces the `text-decoration` shorthand** when you write the line,
+  style, colour and thickness longhands together
+  (`declaration-block-no-redundant-longhand-properties`), but
+  `text-underline-offset` and `text-decoration-skip-ink` are not part of the
+  shorthand and stay separate. `value-keyword-case` also wants
+  `optimizelegibility`, not the spec's camelCase.
+- **Render the link-preview card, don't hand-draw it.** The card is 1200x630 of
+  HTML screenshotted through the same CDP session, reusing the site's own
+  tokens, so it cannot drift from the design it advertises.
+
 ## Accessibility sensors
 
 Nothing in the starter measures accessibility, so wire it yourself --- and be

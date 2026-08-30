@@ -1,67 +1,42 @@
-# COMP4020 static prototype template
+# Record of Interview
 
-A starter template for static-site prototypes in **COMP4020 / COMP8020 Agentic
-Coding Studio**. The course provisions a repo from this template for each
-deliverable --- you don't create it yourself. The `start` course skill clones it
-for you; from there, build your prototype and deploy it to GitHub Pages.
+A short browser game for COMP4020 crit 5. A man is dead at the foot of a
+stairwell, you are the one in the chair, and everything you say is typed onto
+the file in front of you.
 
-## CI and Pages only turn on when you ship
+Static site: HTML, CSS and TypeScript on Astro, built to `dist/` and deployed to
+GitHub Pages. No backend, no image assets — the desk grain, the paper fibre and
+the ink-bleed on the stamps are all drawn in CSS and SVG.
 
-Your repo starts private, and both CI jobs (`check` and `deploy`) are gated on
-it being public. While private, a push to `main` runs nothing in CI ---
-`pnpm check` (below) is your feedback loop until then. When you're ready, the
-course's `/ship` skill flips the repo public, turns on GitHub Pages, and
-dispatches the deploy for you; there's nothing to configure in the Pages
-settings yourself. From that point, every push to `main` builds and deploys, and
-the deploy step prints your live URL and checks it returns 200.
+## What's where
 
-## What gets marked
+| Path | What it is |
+| --- | --- |
+| `src/lib/story.ts` | The graph: passages, answers, what each answer puts on the record, and what the interrogator says when two of them collide. Content only, no logic. |
+| `src/lib/interrogation.ts` | The engine: claim store, collision check, suspicion counter, transcript, ending resolver. No DOM. |
+| `src/lib/interrogation.test.ts` | The engine's own tests, against a fixture graph rather than the real story, so rewriting a passage can't turn them red. |
+| `src/scripts/game.ts` | The room. Renders a state, dispatches an answer, decides nothing. |
+| `src/styles/global.css` | The desk and the page. |
+| `spec/` | What the checks are for — see `spec/README.md`. |
 
-The deployed site is the deliverable, assessed live in Chrome at two fixed
-viewports --- see the course website's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#marking-environment)
-for the details.
-
-## Quick start
+## Working in here
 
 ```sh
-mise install       # supported path: install the template's Node and pnpm
+mise install         # the tested Node and pnpm for this template
 pnpm install
 pnpm dev             # local dev server
-pnpm check           # most of what CI runs (links, secrets and deploy are CI-only)
-pnpm check:evidence  # the process-evidence check CI runs before you ship
-pnpm build           # produce dist/ (what gets deployed)
-
-# reproduce CI's links check before you push
-pnpm dlx linkinator ./dist --silent --skip "^https?://(?!localhost|127)"
+pnpm check           # typecheck, build, lint, and every test
+pnpm check:evidence  # the process-evidence check CI runs before shipping
+pnpm build           # produce dist/, which is what deploys
 ```
 
-`mise` is the course's recommended runtime manager. If you use another manager
-or the official installers, that is fine: provide the Node and pnpm versions in
-`mise.toml`, then run the same commands. Tutor support reproduces runtime
-problems with mise.
+CI runs the same roster plus a links check, a secret scan, and the deploy —
+none of which run while the repo is private. `pnpm check` is the faster loop
+either way.
 
-## What's here
+## The checks
 
-- `index.html`, `styles.css`, `main.ts` --- a minimal starting site. Replace it.
-- `mise.toml` --- the tested Node and pnpm versions for this template.
-- `spec/` --- what the checks are for (`README.md`) and the shipped invariants
-  (`invariants.test.ts`); the spec tests you write live alongside them.
-- `CLAUDE.md` --- orients whoever works in this repo, you or a coding agent.
-  Yours to grow.
-- `PROCESS.md` --- a template for your process overview, showing the
-  cited-moment format. Replace it with your own; `pnpm check:evidence` verifies
-  your citations resolve.
-- `.github/workflows/checks.yml` --- the CI sensors that run on every push once
-  your repo is public, and the GitHub Pages deploy.
-- `.githooks/pre-commit` --- blocks any commit that contains something shaped
-  like an API key, so your COMP4020 key can't end up in a public repo. Installed
-  automatically by `pnpm install`.
-
-This template is SSG-agnostic: plain HTML/CSS/TypeScript on Vite, so you can add
-Astro, Eleventy, or any static generator later without changing how it deploys.
-The course plugin's `stack` skill performs the swap for you — to the course
-default (Astro) or bare HTML/CSS — with the Pages base path, lockfile, and CI
-link check handled.
-
-See the course site for how the checks map to each week of the course.
+`spec/invariants.test.ts` and `spec/a11y.test.ts` came with the harness.
+`spec/crit-5.test.ts` is this brief's contract and retires with it.
+`spec/contrast.test.ts` is new this week and carries forward: axe cannot compute
+contrast under jsdom, so nothing was checking the palette until it existed.
