@@ -111,15 +111,40 @@ function typeInto(element: HTMLElement, text: string): Promise<void> {
   });
 }
 
+/** A pause the player can cut short, the same way they can cut a line short. */
+async function hold(ms: number): Promise<void> {
+  const until = Date.now() + ms;
+  while (Date.now() < until && !skipRequested) await wait(60);
+}
+
+/**
+ * The point of the red ink is that you see your own words marked up. On a phone
+ * the line it lands on is usually two screens above the one you're reading, so
+ * go and look at it, then come back.
+ */
+async function visitTheOldLine(index: number): Promise<void> {
+  const older = line(index);
+  if (!older) return;
+  const box = older.getBoundingClientRect();
+  const headroom = marks.getBoundingClientRect().bottom;
+  if (box.top >= headroom && box.bottom <= win.innerHeight) return;
+  const behavior = animated() ? "smooth" : "auto";
+  const came = win.scrollY;
+  win.scrollTo({ top: Math.max(0, came + box.top - win.innerHeight * 0.4), behavior });
+  await hold(animated() ? 1300 : 800);
+  win.scrollTo({ top: came, behavior });
+  await hold(animated() ? 400 : 0);
+}
+
 /** One block of the interrogator's speech, a line at a time. */
-async function say(text: string, variant = "", afterFirstLine?: () => void): Promise<void> {
+async function say(text: string, variant = "", afterFirstLine?: () => void | Promise<void>): Promise<void> {
   const lines = text.split("\n").filter((line) => line.length > 0);
   for (const [index, line] of lines.entries()) {
     const paragraph = doc.createElement("p");
     paragraph.className = variant ? `speech ${variant}` : "speech";
     append(paragraph);
     await typeInto(paragraph, line);
-    if (index === 0 && afterFirstLine) afterFirstLine();
+    if (index === 0 && afterFirstLine) await afterFirstLine();
     if (index < lines.length - 1 && animated() && !skipRequested) await wait(LINE_MS);
   }
   announce.textContent = lines.join(" ");
@@ -269,11 +294,12 @@ async function pick(index: number): Promise<void> {
 /** He quotes it back, the old line gets circled, and a mark lands on the file. */
 async function deliverCatch(caught: Contradiction): Promise<void> {
   const ordinal = state.contradictions.length;
-  await say(catchLine(caught), "speech-catch", () => {
+  await say(catchLine(caught), "speech-catch", async () => {
     strike(line(caught.earlier), ordinal);
     strike(line(caught.now), ordinal);
     land(state.suspicion);
     announce.textContent = `That line is circled in red. ${MARK_WORDS[state.suspicion]}`;
+    await visitTheOldLine(caught.earlier);
   });
 }
 
