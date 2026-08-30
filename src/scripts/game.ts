@@ -10,6 +10,7 @@ import {
   type Contradiction,
 } from "../lib/interrogation";
 import { PREAMBLE, REGISTER, START, passages, type Choice, type Passage } from "../lib/story";
+import { createTypebar, returning, striking } from "./audio";
 
 const doc = document;
 const view = doc.defaultView;
@@ -27,6 +28,9 @@ const choices = must<HTMLElement>("choices");
 const marks = must<HTMLElement>("marks");
 const announce = must<HTMLElement>("announce");
 const stamps = [...marks.querySelectorAll<SVGElement>(".stamp")];
+const reel = must<HTMLButtonElement>("reel");
+
+const tape = createTypebar(win);
 
 const still = win.matchMedia("(prefers-reduced-motion: reduce)");
 const animated = (): boolean => !still.matches;
@@ -67,21 +71,52 @@ let typing = false;
 let skipRequested = false;
 
 function requestSkip(): void {
-  if (typing) skipRequested = true;
+  if (!typing) return;
+  skipRequested = true;
+  // Nothing is scheduled ahead, so this only has to silence what is already
+  // sounding --- there is no queue to flush.
+  tape.cut();
 }
 
-doc.addEventListener("pointerdown", requestSkip);
+/** The tape mark is a control, not somewhere to click to hurry him along. */
+const onTheReel = (event: Event): boolean =>
+  event.target instanceof Node && reel.contains(event.target);
+
+// A mouse grants activation on the down, a key on the down, and a touch only on
+// the way back up --- so all three are hooked, and wake() is idempotent.
+doc.addEventListener("pointerdown", (event) => {
+  tape.wake();
+  if (!onTheReel(event)) requestSkip();
+});
+doc.addEventListener("pointerup", () => {
+  tape.wake();
+});
 doc.addEventListener(
   "keydown",
   (event) => {
+    tape.wake();
+    if (onTheReel(event)) return;
     if (!event.metaKey && !event.ctrlKey && !event.altKey) requestSkip();
   },
   { capture: true },
 );
 
+function paintReel(): void {
+  const on = !tape.muted();
+  reel.setAttribute("aria-pressed", String(on));
+  reel.classList.toggle("is-off", !on);
+}
+
+reel.addEventListener("click", () => {
+  tape.wake();
+  tape.mute(!tape.muted());
+  paintReel();
+});
+paintReel();
+
 /** How long to hold after a character, so he sounds like he has all night. */
 function beatAfter(character: string): number {
-  if (character === "." || character === "?" || character === "!") return STOP_MS;
+  if (returning(character)) return STOP_MS;
   if (character === "," || character === "—" || character === ";") return COMMA_MS;
   return CHAR_MS;
 }
@@ -89,10 +124,18 @@ function beatAfter(character: string): number {
 function typeInto(element: HTMLElement, text: string): Promise<void> {
   if (!animated()) {
     element.textContent = text;
+    // Nothing is being typed here, so there are no keystrokes to sound --- but
+    // a motion preference is not a sound preference, and silence would be a
+    // second thing taken away. One sound as the line lands, and a carriage if
+    // it lands on the end of a sentence.
+    const tail = text.replace(/[”"’'\s]+$/u, "").slice(-1);
+    if (returning(tail)) tape.carriage();
+    else tape.strike();
     return Promise.resolve();
   }
   return new Promise((resolve) => {
     let index = 0;
+    let letters = 0;
     const step = (): void => {
       if (skipRequested) {
         element.textContent = text;
@@ -100,12 +143,16 @@ function typeInto(element: HTMLElement, text: string): Promise<void> {
         return;
       }
       index += 1;
+      const character = text[index - 1];
       element.textContent = text.slice(0, index);
+      if (returning(character)) tape.carriage();
+      else if (striking(character, letters)) tape.strike();
+      if (/\S/u.test(character)) letters += 1;
       if (index >= text.length) {
         resolve();
         return;
       }
-      win.setTimeout(step, beatAfter(text[index - 1]));
+      win.setTimeout(step, beatAfter(character));
     };
     step();
   });
@@ -204,6 +251,7 @@ function land(suspicion: number): void {
   const stamp = stamps[suspicion - 1];
   if (!stamp) return;
   stamp.classList.add("is-stamped");
+  tape.thud();
   if (animated()) {
     stamp.classList.add("is-landing");
     doc.body.classList.add("is-jolted");
@@ -391,6 +439,7 @@ async function closeTheFile(ending: Passage): Promise<void> {
 function stampVerdict(ending: Passage): void {
   const verdict = doc.createElement("p");
   verdict.className = "verdict";
+  tape.thud();
   verdict.dataset.outcome = ending.ending ?? "finish";
   verdict.textContent = ending.stamp ?? "";
   const stick = atBottom();
@@ -436,6 +485,8 @@ async function restart(): Promise<void> {
   marks.setAttribute("aria-label", MARK_WORDS[0]);
   state = begin(START);
   asides = 0;
+  // the tape mark is deliberately not reset: a player who turned it off has
+  // said so once
   played = true;
   win.scrollTo({ top: 0, behavior: "auto" });
   await open();

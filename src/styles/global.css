@@ -19,6 +19,7 @@
   --ink-option: #4a4235;
   --rule: #c6bda7;
   --red: #a8261c;
+  --reel: #83725a;
   --measure: 62ch;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
   --mono: "Courier Prime", "Courier New", ui-monospace, monospace;
@@ -100,6 +101,77 @@ body::before {
   padding-block: 2rem;
   padding-inline: 1.5rem;
   min-block-size: 100dvh;
+}
+
+/* --- the tape ------------------------------------------------------------
+ *
+ * A mark, not a control panel. It has to be legible on the desk at 1920 and on
+ * the page at 390 --- where there is barely any desk left --- so the ink is
+ * picked to clear 3:1 against both grounds rather than against one of them.
+ * src/scripts/audio.test.ts holds it to that. */
+
+.desk-edge {
+  position: fixed;
+  z-index: 5;
+  inset-block-end: 1.1rem;
+  inset-inline-end: 1.1rem;
+}
+
+.reel {
+  display: block;
+  position: relative;
+  border: 1.5px solid var(--reel);
+  border-radius: 50%;
+  padding: 0;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  background-color: transparent;
+  cursor: pointer;
+  transition:
+    transform 130ms ease,
+    box-shadow 130ms ease;
+}
+
+.reel::before {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  border-radius: 50%;
+  inline-size: 0.32rem;
+  block-size: 0.32rem;
+  background-color: var(--reel);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.reel::after {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: -0.22rem;
+  block-size: 1.5px;
+  background-color: var(--reel);
+  content: "";
+  transform: rotate(-42deg);
+  opacity: 0;
+  transition: opacity 130ms ease;
+}
+
+.reel:hover {
+  box-shadow: 0 0 0 3px rgb(131 114 90 / 24%);
+  transform: scale(1.12);
+}
+
+.reel:active {
+  transform: scale(0.96);
+}
+
+.reel:focus-visible {
+  outline: 2px solid var(--reel);
+  outline-offset: 3px;
+}
+
+.reel.is-off::after {
+  opacity: 1;
 }
 
 /* --- the page ------------------------------------------------------------ */
@@ -595,6 +667,11 @@ body::before {
   .record,
   .choices {
     max-inline-size: none;
+  }
+
+  .desk-edge {
+    inset-block-end: 0.7rem;
+    inset-inline-end: 0.7rem;
   }
 
   .slot {

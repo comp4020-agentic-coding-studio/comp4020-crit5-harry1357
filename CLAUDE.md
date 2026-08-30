@@ -306,6 +306,47 @@ would never have said so.
   HTML screenshotted through the same CDP session, reusing the site's own
   tokens, so it cannot drift from the design it advertises.
 
+## Web Audio, the second time (learned in crit 5)
+
+Crit 4's notes above are about getting a context to *start*. These are about
+getting a scheduled sound to actually exist once it has.
+
+- **`currentTime` is already the past.** It is the start of the render quantum
+  that has gone, so an envelope pinned to it is partly behind the clock --- and
+  a short one (8ms) can land entirely behind it, in which case the gain param
+  renders as its own end state and the voice is silent. Schedule every voice a
+  few milliseconds ahead (`currentTime + 0.008`). Same family as the suspended
+  context trap: the sound is inaudible for a clock reason, not a routing one.
+- **Give simultaneous voices a floor on how close they can land.** Text that
+  arrives all at once (the reduced-motion path) fires a dozen voices on one
+  instant, which sums into a thump rather than reading as typing. A
+  `nextFree = max(now + lookahead, nextFree + gap)` cursor spreads them and is
+  inert when the calls are already far apart.
+- **Count nodes, don't just listen.** Patching `createBufferSource` and
+  `createOscillator` to record every `start()` turns "does it sound right" into
+  arithmetic: 51 voices over 137 characters matched
+  `ceil(letters/3) + 2 per carriage` exactly, which is a far stronger claim than
+  any spectrum reading. Only the thud uses an oscillator, so counting
+  oscillators proves *which* sound fired.
+- **The frequency domain lies about transients.** A 2048-sample FFT window is
+  ~43ms; an 8ms click is smeared across it and reads ~10dB quieter than a 50ms
+  sound that fills it. Compare short sounds by peak amplitude in the time
+  domain (`getFloatTimeDomainData` sampled every 8ms, clustered into events),
+  not by `getFloatFrequencyData`.
+- **Reading the analyser as soon as the DOM settles is a race.** With motion
+  off the text lands instantly, so the wait that used to cover the sound is gone
+  and the peak reads 0.0000 --- identical to broken audio, and I "fixed" it once
+  before noticing. Let the audio settle before measuring.
+- **A motion preference is not a sound preference.** Turning off the typewriter
+  removes the per-character loop, and with it every keystroke sound, silently.
+  If reduced motion is meant to keep audio, something has to sound on the path
+  where nothing is being typed.
+- **A control fixed to the viewport sits on a different ground at each
+  viewport.** The mute mark is on the desk at 1920 and on the page at 390,
+  because the page fills the phone. One ink, two grounds: pick it to clear 3:1
+  (WCAG 1.4.11, not 4.5 --- it is a graphic, not text) against both, and hold it
+  there with a test.
+
 ## Accessibility sensors
 
 Nothing in the starter measures accessibility, so wire it yourself --- and be

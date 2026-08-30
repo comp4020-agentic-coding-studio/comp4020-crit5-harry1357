@@ -115,6 +115,15 @@ const openingLines = opening.text.split("\n");
           <p class="sr-only" id="announce" aria-live="polite"></p>
         </main>
       </div>
+
+      <!-- The tape. It sits outside the file on purpose: the page gets a
+           transform when a mark lands, and a transformed ancestor would drag a
+           fixed-position child around with it. -->
+      <footer class="desk-edge">
+        <button class="reel" id="reel" type="button" aria-pressed="true">
+          <span class="sr-only">Typewriter sound</span>
+        </button>
+      </footer>
     </div>
 
     <script>
