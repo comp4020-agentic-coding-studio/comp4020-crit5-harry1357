@@ -1,7 +1,8 @@
 # Process overview
 
-A reading-guide to how *Record of Interview* came together. Five commits, in the
-order the work actually happened: engine, story, room, sensor, harness.
+A reading-guide to how *Record of Interview* came together. Six commits, in the
+order the work actually happened: engine, story, room, sensor, harness, and a
+content pass that deepened the writing without touching any of it.
 
 ## What I built
 
@@ -86,6 +87,30 @@ playthrough now reports header visibility after every one of the eight answers,
 at 390x844 as well as 1920x1080.
 
 [`09d1972`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-harry1357/commit/09d1972)
+
+### 5. Depth without more paths, and two content bugs that looked like code
+
+A second pass added the record statement, mid-run forks, callbacks and an
+escalating register --- all of it content, with the engine, the collision check,
+the counter and the resolver's structure untouched. All 61 tests passed
+unmodified, which is the thing worth citing: the graph doubled from 22 passages
+to 30 and grew two new forks without a single assertion needing to move, because
+the contract tests only ever look at the shape.
+
+Two bugs in the new material read as code bugs and weren't. The interjections
+were picked with `transcript.length % set.length`, which looks evenly
+distributed and isn't --- two pressure points four answers apart drew the same
+line, so the same aside arrived twice in one interview. And two of the callbacks
+quoted the answer given one question earlier, which is a follow-up, not the
+record being read back; I counted the distance from where each claim went on the
+record to where it gets recalled and re-targeted the two under three questions.
+
+How I knew: the scripted playthroughs print every line he says, so both were
+visible in a transcript diff rather than needing to be played for. Timing came
+from the same harness --- worst case 105s of typing at full motion with zero
+thinking time, against a 300s budget, so no questions had to be cut.
+
+[`0a6f286`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-harry1357/commit/0a6f286)
 
 ## What the checks cover, and what they don't
 
